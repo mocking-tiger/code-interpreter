@@ -4,6 +4,8 @@ from langchain_openai import ChatOpenAI
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain_experimental.utilities import PythonREPL
 from langchain_core.tools import Tool
+from langchain_experimental.agents.agent_toolkits.csv.base import create_csv_agent
+
 
 load_dotenv()
 
@@ -34,12 +36,25 @@ def main():
 
     agent = create_react_agent(llm=ChatOpenAI(model="gpt-4o-mini", temperature=0), tools=tools, prompt=prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
-    agent_executor.invoke(
-        input={
-            "input": """generate and save in current working directory 15 QRcodes
-                                that point to www.udemy.com/course/langchain, you have qrcode package installed already"""
-        }
+    # agent_executor.invoke(
+    #     input={
+    #         "input": """generate and save in current working directory 15 QRcodes
+    #                             that point to www.udemy.com/course/langchain, you have qrcode package installed already"""
+    #     }
+    # )
+
+    from langchain.agents.agent_types import AgentType
+
+    csv_agent = create_csv_agent(
+      llm=ChatOpenAI(model="gpt-4o-mini", temperature=0),
+      path="episode_info.csv",
+      verbose=True,
+      allow_dangerous_code=True,
+      agent_type=AgentType.OPENAI_FUNCTIONS,
+      agent_executor_kwargs={"handle_parsing_errors": True},
     )
+
+    csv_agent.invoke(input={"input": "How many columns are in the CSV file?"})
 
 
 if __name__ == "__main__":
